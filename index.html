@@ -30,22 +30,39 @@
 </div>
 
 <div>
-  <h3>Register a new puppy</h3>
+  <h3>Register a new puppy:</h3>
   
-  <form action="#">
+  <form data-form="single" action="#">
     <p>
       <label for="name">Name</label><br>
       <input name="name" type="text">
     </p>
 
     <p>
-      <label for="breed">Breed</label><br>
+      <label for="breed_id">Breed</label><br>
       <select name="breed_id"></select>
     </p>
 
     <input type="submit" value="Register Puppy">
   </form>
 </div>
+
+<div>
+  <h3>Register multiple puppies via CSV:</h3>
+  
+  <form data-form="batch" action="#">
+    <p>
+      <label for="file">Please select a CSV file</label><br>
+      <input type="file">
+    </p>
+
+    <input type="submit" value="Process Batch">
+  </form>
+</div>
+
+<div id="batch-ok" class="status-ok"></div>
+
+<div id="batch-alert" class="status-alert"></div>
 
 <div>
   <h3>Our puppies:</h3>

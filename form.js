@@ -2,17 +2,66 @@ var PUP = PUP || {};
 
 PUP.Form = (function($, List, Breeds, Status){
 
+  var batchOkCount, batchErrorCount;
+
   var init = function(){
     _buildSelectOptions( Breeds.getBreeds() );
+    _resetBatchCount();
   };
 
-  var submit = function(){
-    var postData = JSON.stringify({
+  var submitSingle = function(){
+    _submit({
       name: $("input[name='name']").val(),
       breed_id: $("select[name='breed_id']").val()
+    }).done(function(){
+      _resetForm();
+    });
+  };
+
+  var submitBatch = function(){
+    var ajaxBatch = [];
+    var file = $("input[type='file']")[0].files[0];
+    var reader = new FileReader();
+    reader.readAsText(file);
+    reader.onload = function(){
+      rows = reader.result.split(/\r\n|\n/);
+
+      for(var i=0; i<rows.length; i++){
+        var row = rows[i].split(',');
+        ajaxBatch.push = ( _submit({name: row[1], breed_id: row[0]})
+          .done(function(){
+            _batchStatus("ok");
+          })
+          .error(function(){
+            _batchStatus("error");
+          }) );
+      }
+
+      $.when.apply($, ajaxBatch).always(function(){
+        setTimeout(function(){
+          _resetBatchCount();
+        }, 5000);
+      });
+    };
+  };
+
+  var _batchStatus = function(status){
+    if (status == 'ok'){
+      batchOkCount += 1;
+      $('#batch-ok').text("Registered " + batchOkCount + " puppies!");
+    } else if (status == 'error') {
+      batchErrorCount += 1;
+      $('#batch-error').text("Failed to register " + batchErrorCount + " puppies :(");
+    } 
+  };
+
+  var _submit = function(puppy){
+    var postData = JSON.stringify({
+      name: puppy.name,
+      breed_id: puppy.breed_id
     });
 
-    $.ajax({
+    return $.ajax({
       method: "POST",
       url: "https://ajax-puppies.herokuapp.com/puppies.json",
       data: postData,
@@ -23,6 +72,18 @@ PUP.Form = (function($, List, Breeds, Status){
         List.addPuppy(puppy);
       }
     });
+  };
+
+  var _resetForm = function(){
+    $("input[name='name']").val("");
+    $("select[name='breed_id']").val(1);
+  };
+
+  var _resetBatchCount = function(){
+    batchOkCount = 0;
+    batchErrorCount = 0;
+    $('.batck-ok').text("");
+    $('.batch-error').text("");
   };
 
   var _buildSelectOptions = function(breeds){
@@ -37,7 +98,8 @@ PUP.Form = (function($, List, Breeds, Status){
 
   return {
     init: init,
-    submit: submit
+    submitSingle: submitSingle,
+    submitBatch: submitBatch
   };
 
 })($, PUP.List, PUP.Breeds, PUP.Status);
@@ -61,9 +123,14 @@ $( document ).ready(function(){
     PUP.List.update();
   });
 
-  $('form').on("submit", function(e){
+  $("[data-form='single']").on("submit", function(e){
     e.preventDefault();
-    PUP.Form.submit();
+    PUP.Form.submitSingle();
+  });
+
+    $("[data-form='batch']").on("submit", function(e){
+    e.preventDefault();
+    PUP.Form.submitBatch();
   });
 
   $('ul').on("click", '.adopt', function(e){
