@@ -19,28 +19,32 @@ PUP.Form = (function($, List, Breeds, Status){
   };
 
   var submitBatch = function(){
-    var ajaxBatch = [];
     var file = $("input[type='file']")[0].files[0];
     var reader = new FileReader();
     reader.readAsText(file);
     reader.onload = function(){
+
+      var ajaxBatch = [];
       rows = reader.result.split(/\r\n|\n/);
 
       for(var i=0; i<rows.length; i++){
         var row = rows[i].split(',');
-        ajaxBatch.push = ( _submit({name: row[1], breed_id: row[0]})
-          .done(function(){
-            _batchStatus("ok");
+        ajaxBatch.push( 
+          _submit({name: row[1], breed_id: row[0]})
+          .then(function(){
+            _batchStatus('ok');
+          }, function(){
+            _batchStatus('error');
           })
-          .error(function(){
-            _batchStatus("error");
-          }) );
+        );
       }
 
       $.when.apply($, ajaxBatch).always(function(){
         setTimeout(function(){
           _resetBatchCount();
-        }, 5000);
+          $('#batch-ok').fadeOut(2000);
+          $('#batch-error').fadeOut(2000);
+        }, 4000);
       });
     };
   };
@@ -48,10 +52,10 @@ PUP.Form = (function($, List, Breeds, Status){
   var _batchStatus = function(status){
     if (status == 'ok'){
       batchOkCount += 1;
-      $('#batch-ok').text("Registered " + batchOkCount + " puppies!");
+      $('#batch-ok').fadeIn().text("Registered " + batchOkCount + " puppies!");
     } else if (status == 'error') {
       batchErrorCount += 1;
-      $('#batch-error').text("Failed to register " + batchErrorCount + " puppies :(");
+      $('#batch-error').fadeIn().text("Failed to register " + batchErrorCount + " puppies :(");
     } 
   };
 
@@ -82,8 +86,6 @@ PUP.Form = (function($, List, Breeds, Status){
   var _resetBatchCount = function(){
     batchOkCount = 0;
     batchErrorCount = 0;
-    $('.batck-ok').text("");
-    $('.batch-error').text("");
   };
 
   var _buildSelectOptions = function(breeds){
