@@ -25,7 +25,7 @@ PUP.Form = (function($, List, Breeds, Status){
     reader.onload = function(){
 
       var ajaxBatch = [];
-      rows = reader.result.split(/\r\n|\n/);
+      var rows = reader.result.split(/\r\n|\n/);
 
       for(var i=0; i<rows.length; i++){
         var row = rows[i].split(',');
